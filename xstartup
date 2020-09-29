@@ -1,0 +1,255 @@
+#!/bin/bash
+
+#Global variables
+NAME="[vnc_xstartup]: "
+ERR="[vnc_xstartup - ERROR]:"
+COMMAND1=/usr/bin/x11vnc
+COMMAND2=/usr/bin/Xvfb
+COMMAND3=/usr/bin/sed
+COMMAND4=/usr/bin/awk
+COMMAND5=/usr/bin/grep
+PASSWD=$HOME/.vnc/passwd
+I18n=.i18n.xstartup.yml
+USEPW=""
+WMCOMM=""
+# Parsea archivo xml
+parse_yaml(){
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])(".")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
+# deuelve el valor de una clave existente
+#	Primer parametro: ruta y nombre del archivo Yaml de origen
+#	Segundo parametro: clave yml separada por .
+get_yml_value(){
+	local out=$( parse_yaml $1 | grep -m1 $2 )
+	out=${out#*'"'}
+	out=${out%'"'*}
+	echo "$out"
+}
+
+# devuelve "+" si la clave existe, sino "-"
+#	Primer parametro: ruta y nombre del archivo Yaml de origen
+#	Segundo parametro: clave yml separada por .
+is_yml_key(){
+	local out=$( parse_yaml $1 | grep -m1 $2 )
+	out=${out%=*}
+	if [ "$out" == "$2" ]; then
+		echo '+'
+	else
+		echo '-'
+	fi
+}
+
+# Print banner
+banner(){
+	local ERRI18N="[vnc_xstartup - ERROR]:  package damaged!"
+	echo ' _    ___   ________    _  ________________    ____  ________  ______ ';
+	echo '| |  / / | / / ____/   | |/ / ___/_  __/   |  / __ \/_  __/ / / / __ \';
+	echo '| | / /  |/ / /        |   /\__ \ / / / /| | / /_/ / / / / / / / /_/ /';
+	echo '| |/ / /|  / /___     /   |___/ // / / ___ |/ _  _/ / / / /_/ / ____/ ';
+	echo '|___/_/ |_/\____/____/_/|_/____//_/ /_/  |_/_/ |_| /_/  \____/_/      ';
+	echo '               /_____/                                                ';
+	if [ -f "$I18n" ]; then
+		echo "$NAME $I18n exists."
+	else
+		echo "$ERRI18N" >&2
+		exit 1
+	fi
+	if [ "$LANG" == '' ]; then
+		LANG="en_EN"
+	fi
+	check_sed
+	check_awk
+	check_grep
+}
+
+# if x11vnc installed
+check_x11vnc(){
+		if [ -x "$COMMAND1" ]; then
+			echo \
+				"$NAME $COMMAND1"\
+				"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	else
+		echo "$ERR"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.require)"\
+			"$COMMAND1"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.prev)" >&2
+		exit 1
+	fi
+}
+
+# check xvfb installed
+check_xvbf(){
+	if [ -x "$COMMAND2" ]; then
+		echo \
+			"$NAME $COMMAND2"\
+			"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	else
+		echo "$ERR"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.require)"\
+			"$COMMAND2"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.prev)" >&2
+		exit 1
+	fi
+}
+
+# check sed installed
+check_sed(){
+	if [ -x "$COMMAND3" ]; then
+		echo \
+			"$NAME $COMMAND3"\
+			"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	else
+		echo "$ERR"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.require)"\
+			"$COMMAND3"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.prev)" >&2
+		exit 1
+	fi
+}
+
+# check awk installed
+check_awk(){
+	if [ -x "$COMMAND4" ]; then
+		echo \
+		"$NAME $COMMAND4"\
+		"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	else
+		echo "$ERR"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.require)"\
+			"$COMMAND4"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.prev)" >&2
+		exit 1
+	fi
+}
+
+# check grep installed
+check_grep(){
+	if [ -x "$COMMAND5" ]; then
+		echo \
+		"$NAME $COMMAND5"\
+		"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	else
+		echo "$ERR"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.require)"\
+			"$COMMAND5"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_exist.prev)" >&2
+		exit 1
+	fi
+}
+
+#check if vnc passwd exist
+check_passw_usable(){
+  local run = "#x11vnc -storepasswd"
+	if [ "$2" == '-usepw' ]; then
+	  if [ -f "$PASSWD" ]; then
+		  echo "$NAME $PASSWD"\
+			"$(get_yml_value $I18n ${LANG%_*}.alert.check.exist)"
+	  else
+		  echo "$ERR "\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_run.pre_opt)"\
+			"$2"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_run.post_opt)"\
+			" $run" >&2
+		  exit 1
+	  fi
+	else
+	  if [ "$2" != "" ]; then
+      echo "$ERR "\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_passw_usable.pre_arg)"\
+			"$2"\
+			"$(get_yml_value $I18n ${LANG%_*}.error.check_passw_usable.post_arg)" >&2
+		  exit 1
+	  fi
+	fi
+}
+
+#install usermode
+install(){
+	local SRC=./xstartup
+	local SRC2=./.i18n.xstartup.yml
+	if [ -f "$SRC" ] && [ -f "$SRC2" ] ; then
+    echo "$NAME $SRC"\
+    "$(get_yml_value $I18n ${LANG%_*}.alert.install.source)"
+	else
+    echo "$ERR "\
+    "$(get_yml_value $I18n ${LANG%_*}.error.install.source)" >&2
+		exit 1
+	fi
+	if [ "$1" == "" ]; then
+		read -p "$NAME $(get_yml_value $I18n ${LANG%_*}.prompt.wm_quest)" WMCOMM
+	else
+		WMCOMM=$1
+	fi
+	cp $SRC $HOME/.vnc
+	cp $SRC2 $HOME/.vnc
+	echo ".vnc/xstartup $WMCOMM -usepw" >> $HOME/.bash_profile
+	echo "$NAME $(get_yml_value $I18n ${LANG%_*}.alert.install.ed)"
+	exit 0
+}
+
+#uninstall
+uninstall(){
+	sed -i '/xstartup/d' ~/.bash_profile
+	rm $HOME/.vnc/xstartup
+	rm $HOME/.vnc/.i18n.xstartup.yml
+  echo "$NAME $(get_yml_value $I18n ${LANG%_*}.alert.uninstall.ed)"
+	exit 0
+}
+
+#### Main ####
+banner
+if [ "$#" -lt 1 ]; then
+	echo "$ERR $# parameters, require argument window manager or --user-service or --remove-user-service" >&2
+	exit 2
+fi
+
+for arg in "$@"
+do
+	case $arg in
+        "-usepw" )
+					if [ "$WMCOMM" == "" ]; then
+            echo "$ERR "\
+      			"$(get_yml_value $I18n ${LANG%_*}.error.main.usepw)" >&2
+						exit 1
+					else
+						check_passw_usable
+						USEPW="-usepw"
+					fi;;
+        "--user-service" )
+          if [ "$2" != "" ]; then
+        		install $2
+        	else
+        		install
+        	fi;;
+        "--remove-user-service" )
+					uninstall;;
+        "$arg" )
+					if [ "$WMCOMM" == "$arg" ]; then
+						check_x11vnc
+						check_xvbf
+					else
+						check_x11vnc
+						check_xvbf
+						WMCOMM="$arg"
+					fi;;
+	esac
+done
+
+nohup Xvfb -pn :10 1>/dev/null 2>&1 &
+export DISPLAY=:10
+$WMCOMM 1>/dev/null 2>&1 &
+x11vnc -display :10 -bg -forever $USEPW -loop -xkb 1>/dev/null 2>&1 &

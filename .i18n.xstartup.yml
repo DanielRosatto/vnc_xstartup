@@ -1,0 +1,53 @@
+## global definitions
+en:
+  alert:
+    check_exist: "exist!"
+    install:
+      source: "source ok."
+      wm_quest: "Ingrese el comando activador del window manager:"
+      ed: "vncserver ready, after reboot can connect to vncviewer <localhost>:0"
+    uninstall:
+      ed: "xstartup vnc server removed"
+  prompt:
+    wm_quest: "Enter the window manager trigger command:"
+  error:
+    check_exist:
+      require: "requires that you have"
+      prev: "previously installed"
+    check_passw_usable:
+      pre_arg: "invalid argument "
+      post_arg: ""
+    check_run:
+      pre_opt: ''
+      post_opt: "requires previuslly run:"
+    install:
+      source: "package damaged."
+    main:
+      usepw: "require an argument of window manager"
+
+## español
+es:
+  alert:
+    check_exist: "¡existe!"
+    install:
+      source: "código fuente chequeado.."
+      wm_quest: "Ingrese el comando activador del window manager:"
+      ed: "vncserver listo, después de reiniciar, te podrás conectar a vncviewer <localhost>:0"
+    uninstall:
+      ed: "xstartup para vnc correctamente desinstalado"
+  prompt:
+    wm_quest: "Ingrese el comando de arranque del window manager:"
+  error:
+    check_exist:
+      require: "deberías tener"
+      prev: "previamente instalado"
+    check_passw_usable:
+      pre_arg: ""
+      post_arg: "parámetro inexistente"
+    check_run:
+      pre_opt: "La opción "
+      post_opt: "requiere previamente ejecutar:"
+    install:
+      source: "paquete roto."
+    main:
+      usepw: "se requiere un argumento para el  window manager"
