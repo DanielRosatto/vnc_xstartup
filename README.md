@@ -11,8 +11,9 @@ Unix script basado en Xvfb y x11vnc que provee de un escritorio virtual customiz
 ```
 * Luego reiniciar el usuario dedicado.
 * Finalmente poodrá acceder desde otro dispositivo en la misma LAN.
-* Si fuera una Tablet o celular con Realvnc, se crea la conexión <Ip del server *nix:5900>.
-* Sino puede usar un cliente vnc:
+* Si fuera una Tablet o celular con Realvnc, se crea la conexión <Ip del host>:5900
+* Sino puede usar el cliente vnc que sse incorpora con las dependencias:
 ``` [bash]
-  $ vncviewer <ip server *nix>:0
+  $ gvncviewer <ip del host>:0
 ```
+En el caso de ser un usuario avanzado, es posible modificar el servidor vnc editando convenientemente la linea FF de xstartup 

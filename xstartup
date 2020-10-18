@@ -153,7 +153,7 @@ check_grep(){
 
 #check if vnc passwd exist
 check_passw_usable(){
-  local run = "#x11vnc -storepasswd"
+  local run="#x11vnc -storepasswd"
 	if [ "$2" == '-usepw' ]; then
 	  if [ -f "$PASSWD" ]; then
 		  echo "$NAME $PASSWD"\
